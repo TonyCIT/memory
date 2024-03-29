@@ -4,31 +4,34 @@ import FlipCard from 'react-native-flip-card';
 import { Audio } from 'expo-av';
 
 // Path to the images
-const frontImage = require('./assets/icon.png');
-const goodSound = require('./assets/r.mp3');
-const badSound = require('./assets/w.mp3');
+const frontImage = require('./assets/cover.png'); // Path to the front image of the card
+const goodSound = require('./assets/r.mp3'); // Path to the sound for correct matches
+const badSound = require('./assets/w.mp3'); // Path to the sound for incorrect matches
 
 // Data for the cards
 const cardsData = [
-    { id: '1', backImage: require('./assets/1.png'), pairId: '1' },
-    { id: '2', backImage: require('./assets/11.png'), pairId: '1' },
-    { id: '3', backImage: require('./assets/2.png'), pairId: '2' },
-    { id: '4', backImage: require('./assets/22.png'), pairId: '2' },
-    { id: '5', backImage: require('./assets/3.png'), pairId: '3' },
-    { id: '6', backImage: require('./assets/33.png'), pairId: '3' },
-    { id: '7', backImage: require('./assets/4.png'), pairId: '4' },
-    { id: '8', backImage: require('./assets/44.png'), pairId: '4' },
-    { id: '9', backImage: require('./assets/5.png'), pairId: '5' },
-    { id: '10', backImage: require('./assets/55.png'), pairId: '5' },
-    // Repeat for all cards...
+  { id: '1', backImage: require('./assets/1.png'), pairId: '1' },
+  { id: '2', backImage: require('./assets/11.png'), pairId: '1' },
+  { id: '3', backImage: require('./assets/2.png'), pairId: '2' },
+  { id: '4', backImage: require('./assets/22.png'), pairId: '2' },
+  { id: '5', backImage: require('./assets/3.png'), pairId: '3' },
+  { id: '6', backImage: require('./assets/33.png'), pairId: '3' },
+  { id: '7', backImage: require('./assets/4.png'), pairId: '4' },
+  { id: '8', backImage: require('./assets/44.png'), pairId: '4' },
+  { id: '9', backImage: require('./assets/5.png'), pairId: '5' },
+  { id: '10', backImage: require('./assets/55.png'), pairId: '5' },
+  { id: '11', backImage: require('./assets/6.png'), pairId: '6' },
+  { id: '12', backImage: require('./assets/66.png'), pairId: '6' },
 ];
 
+// Calculate card width based on screen size and desired layout
 const screenWidth = Dimensions.get('window').width;
-const cardMargin = 2; // Assuming a margin of 2 from your styles
-const cardsPerRow = 4; // Desired number of cards per row
+const cardMargin = 1.5; // Margin between cards
+const cardsPerRow = 4; // Number of cards per row
 const totalMargin = cardMargin * 2 * cardsPerRow; // Total margin for all cards in a row
-const cardWidth = (screenWidth - totalMargin) / cardsPerRow;
+const cardWidth = (screenWidth - totalMargin) / cardsPerRow; // Calculate individual card width
 
+// Function to shuffle an array
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -37,14 +40,17 @@ const shuffleArray = (array) => {
   return array;
 };
 
+// Main App component
 const App = () => {
-  const [cards, setCards] = useState(() => shuffleArray(cardsData.map(card => ({ ...card, isFlipped: false, matched: false }))));
-  const [canFlip, setCanFlip] = useState(true);
-  const [flippedIndexes, setFlippedIndexes] = useState([]);
+  // State variables
+  const [cards, setCards] = useState(() => shuffleArray(cardsData.map(card => ({ ...card, isFlipped: false, matched: false })))); // State for cards data
+  const [canFlip, setCanFlip] = useState(true); // State to control flipping of cards
+  const [flippedIndexes, setFlippedIndexes] = useState([]); // State to keep track of flipped card indexes
 
-  // Sound effects
+  // State for sound effects
   const [sounds, setSounds] = useState({ goodSound: null, badSound: null });
 
+  // useEffect hook to load sounds on component mount
   useEffect(() => {
     loadSounds();
     return () => {
@@ -53,6 +59,7 @@ const App = () => {
     };
   }, []);
 
+  // Function to load sounds
   const loadSounds = async () => {
     try {
       const goodEffect = new Audio.Sound();
@@ -65,6 +72,7 @@ const App = () => {
     }
   };
 
+  // Function to play sound
   const playSound = async (sound) => {
     try {
       await sound?.replayAsync();
@@ -73,6 +81,7 @@ const App = () => {
     }
   };
 
+  // Function to check for matched pairs
   const checkForMatch = () => {
     const allMatched = cards.every(card => card.matched);
     if (allMatched) {
@@ -80,6 +89,7 @@ const App = () => {
     }
   };
 
+  // Function to handle card press
   const onCardPress = (index) => {
     if (!canFlip || cards[index].matched || cards[index].isFlipped) {
       return;
@@ -101,7 +111,7 @@ const App = () => {
           flippedCards.forEach(card => card.isFlipped = false);
           setCards(newCards);
           setCanFlip(true);
-        }, 1000);
+        }, 1400);
         setCards(newCards);
         return;
       }
@@ -116,7 +126,7 @@ const App = () => {
       <View style={styles.container}>
         {cards.map((card, index) => (
           <TouchableOpacity key={card.id} onPress={() => onCardPress(index)} disabled={!canFlip}>
-            <FlipCard 
+            <FlipCard
               flipHorizontal={true}
               flipVertical={false}
               flip={card.isFlipped}
@@ -139,6 +149,7 @@ const App = () => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',

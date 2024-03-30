@@ -22,7 +22,7 @@ const badSound = require('./assets/w.mp3'); // Path to the sound for incorrect m
 
 
 // Data for the cards
-const cardsData = [
+const defaultCardsData = [
   { id: '1', backImage: require('./assets/1.png'), pairId: '1' },
   { id: '2', backImage: require('./assets/11.png'), pairId: '1' },
   { id: '3', backImage: require('./assets/2.png'), pairId: '2' },
@@ -54,13 +54,39 @@ const shuffleArray = (array) => {
 };
 
 // Main App component
-const App = () => {
+const GameScreen = ({ route }) => {
   // State variables
-  const [cards, setCards] = useState(() => shuffleArray(cardsData.map(card => ({ ...card, isFlipped: false, matched: false })))); // State for cards data
+  const { useDefaultImages, userImages } = route.params || { useDefaultImages: true, userImages: [] };
+  // const [cards, setCards] = useState(() => shuffleArray(defaultCardsData .map(card => ({ ...card, isFlipped: false, matched: false })))); // State for cards data
   const [canFlip, setCanFlip] = useState(true); // State to control flipping of cards
   const [flippedIndexes, setFlippedIndexes] = useState([]); // State to keep track of flipped card indexes
   const { soundEnabled } = useSoundContext();
   const [moves, setMoves] = useState(0);
+
+  const prepareCardData = (useDefault, userImgs) => {
+    let cardsArray = [];
+    if (useDefault) {
+      cardsArray = defaultCardsData.map((card, index) => ({
+        id: `default-${index}`,
+        backImage: card.backImage, // This works because it's a required local image
+        pairId: card.pairId,
+        isFlipped: false,
+        matched: false,
+      }));
+    } else {
+      // We make sure to create pairs and assign the correct uri for dynamic images
+      cardsArray = userImgs.map((img, index) => ({
+        id: `user-${index}`,
+        backImage: { uri: img.uri }, // Make sure to access the uri property of the img object
+        pairId: `${Math.floor(index / 2)}`,
+        isFlipped: false,
+        matched: false,
+      }));
+    }
+    return shuffleArray(cardsArray);
+  };
+
+  const [cards, setCards] = useState(() => prepareCardData(useDefaultImages, userImages));
 
 
   // State for sound effects
@@ -99,61 +125,67 @@ const App = () => {
     }
   };
 
-  // Function to check for matched pairs
+
+  // Adjust the `onCardPress` function to fix the matching logic
+  const onCardPress = (index) => {
+    if (!canFlip || cards[index].matched || cards[index].isFlipped) {
+      return;
+    }
+
+    const newCards = [...cards];
+    newCards[index].isFlipped = true;
+
+    // Use setState callback to correctly increment moves
+    setMoves((prevMoves) => prevMoves + 1);
+
+    const flippedCards = newCards.filter((card) => card.isFlipped && !card.matched);
+
+    if (flippedCards.length === 2) {
+      // Wait for state to update before checking for a match
+      setTimeout(() => {
+        // Determine if the two flipped cards are a match
+        if (flippedCards[0].pairId === flippedCards[1].pairId) {
+          // Mark cards as matched
+          flippedCards[0].matched = true;
+          flippedCards[1].matched = true;
+          playSound(sounds.goodSound);
+          Vibration.vibrate(100);
+          checkForMatch(); // Check if all cards are matched
+        } else {
+          playSound(sounds.badSound);
+          // Flip cards back over
+          flippedCards[0].isFlipped = false;
+          flippedCards[1].isFlipped = false;
+        }
+
+        // Update cards state
+        setCards(newCards);
+        setCanFlip(true);
+      }, 500);
+    } else {
+      // Allow flipping another card
+      setCanFlip(true);
+    }
+  };
+
+  // This function checks if all cards are matched and handles the end game logic
   const checkForMatch = () => {
-    const allMatched = cards.every(card => card.matched);
+    // Check if all cards are matched
+    const allMatched = cards.every((card) => card.matched);
     if (allMatched) {
-      
+      // Game finished logic here
+      Vibration.vibrate([500, 200, 500]);
+      Alert.alert("Congratulations", `You've completed the game in ${moves} moves!`);
 
-      // Vibrate the phone to celebrate the win
-      Vibration.vibrate([500, 200, 500, 200, 1500]);
-
-      // Example score saving, using number of moves, time, or static value
-      // const moves = flippedIndexes.length;
+      // Save the score
       insertScore(moves, (success, result) => {
         if (success) {
-          console.log('Score saved:', result);
-          Alert.alert("Congratulations!", `You've matched all the cards! Your score: ${moves}`);
+          console.log('Score saved successfully', result);
         } else {
           console.error('Failed to save score');
         }
       });
     }
-  };
-
-  // Function to handle card press
-  const onCardPress = (index) => {
-    if (!canFlip || cards[index].matched || cards[index].isFlipped) {
-      return;
-    }
-    setMoves(moves => moves + 1);
-
-    const newCards = [...cards];
-    newCards[index].isFlipped = true;
-    const flippedCards = newCards.filter(card => card.isFlipped && !card.matched);
-
-    if (flippedCards.length === 2) {
-      setCanFlip(false);
-      if (flippedCards[0].pairId === flippedCards[1].pairId) {
-        flippedCards[0].matched = true;
-        flippedCards[1].matched = true;
-        playSound(sounds.goodSound);
-        Vibration.vibrate(100);
-      } else {
-        playSound(sounds.badSound);
-        setTimeout(() => {
-          flippedCards.forEach(card => card.isFlipped = false);
-          setCards(newCards);
-          setCanFlip(true);
-        }, 500);
-        
-        setCards(newCards);
-        return;
-      }
-    }
-    setCards(newCards);
-    setCanFlip(true);
-    checkForMatch();
   };
 
   return (
@@ -174,7 +206,10 @@ const App = () => {
               </View>
               {/* Back */}
               <View style={styles.imageContainer}>
-                <Image style={styles.logo} source={card.backImage} />
+                <Image
+                  style={styles.logo}
+                  source={card.backImage.uri ? { uri: card.backImage.uri } : card.backImage}
+                />
               </View>
             </FlipCard>
           </TouchableOpacity>
@@ -182,6 +217,7 @@ const App = () => {
       </View>
     </ScrollView>
   );
+
 };
 
 // Styles
@@ -211,4 +247,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default GameScreen;

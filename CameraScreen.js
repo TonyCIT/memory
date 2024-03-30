@@ -5,7 +5,7 @@ import { Camera } from 'expo-camera';
 const CameraScreen = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null);
   const [camera, setCamera] = useState(null);
-  const [images, setImages] = useState([]);
+  const [imagePairs, setImagePairs] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -15,16 +15,28 @@ const CameraScreen = ({ navigation }) => {
   }, []);
 
   const takePicture = async () => {
-    if (camera && images.length < 6) { // Ensure we don't exceed 6 images
+    if (camera && imagePairs.length < 6) {
       const data = await camera.takePictureAsync(null);
-      const newImages = [...images, data.uri];
-      setImages(newImages);
+      const newImagePair = {
+        id1: `user-${imagePairs.length * 2}`,
+        id2: `user-${imagePairs.length * 2 + 1}`,
+        uri1: data.uri,
+        uri2: data.uri, // Duplicate the image URI for matching
+        pairId: `${imagePairs.length}`,
+      };
 
-      // Check if we now have 6 images after updating the state.
-      if (newImages.length === 6) {
-        // Navigate to GameScreen with the images
-        navigation.navigate('GameScreen', { useDefaultImages: false, userImages: [...newImages, ...newImages] });
-      }
+      setImagePairs(prevPairs => {
+        const updatedImagePairs = [...prevPairs, newImagePair];
+        // Navigate to GameScreen with the images after capturing 6 images
+        if (updatedImagePairs.length === 6) {
+          const preparedImages = updatedImagePairs.flatMap(({ id1, id2, uri1, uri2, pairId }) => [
+            { id: id1, backImage: { uri: uri1 }, pairId },
+            { id: id2, backImage: { uri: uri2 }, pairId },
+          ]);
+          navigation.navigate('GameScreen', { useDefaultImages: false, userImages: preparedImages });
+        }
+        return updatedImagePairs;
+      });
     }
   };
 
@@ -37,16 +49,22 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Camera style={styles.camera} ref={setCamera}>
+      <Camera style={styles.camera} ref={(ref) => setCamera(ref)}>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={takePicture} disabled={images.length >= 6}>
-            <Text style={styles.text}>{images.length < 6 ? 'Take Picture' : '6 Pictures Taken'}</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={takePicture}
+            disabled={imagePairs.length >= 6}
+          >
+            <Text style={styles.text}>
+              {imagePairs.length < 6 ? 'Take Picture' : '6 Pictures Taken'}
+            </Text>
           </TouchableOpacity>
         </View>
       </Camera>
       <View style={styles.previewContainer}>
-        {images.map((imageUri, index) => (
-          <Image key={index} style={styles.preview} source={{ uri: imageUri }} />
+        {imagePairs.flatMap(({ uri1, uri2 }) => [uri1, uri2]).map((uri, index) => (
+          <Image key={index} style={styles.preview} source={{ uri }} />
         ))}
       </View>
     </View>

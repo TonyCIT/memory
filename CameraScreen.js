@@ -3,20 +3,23 @@ import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 import { Camera } from 'expo-camera';
 
 const CameraScreen = ({ navigation }) => {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [camera, setCamera] = useState(null);
-  const [imagePairs, setImagePairs] = useState([]);
+  // State variables
+  const [hasPermission, setHasPermission] = useState(null); // State to check camera permissions
+  const [camera, setCamera] = useState(null); // Reference to the camera component
+  const [imagePairs, setImagePairs] = useState([]); // State to store captured image pairs
 
+  // useEffect hook to request camera permissions on component mount
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
+      const { status } = await Camera.requestCameraPermissionsAsync(); // Request camera permissions
+      setHasPermission(status === 'granted'); // Set permission status
     })();
   }, []);
 
+  // Function to capture picture from camera
   const takePicture = async () => {
     if (camera && imagePairs.length < 6) {
-      const data = await camera.takePictureAsync(null);
+      const data = await camera.takePictureAsync(null); // Capture picture
       const newImagePair = {
         id1: `user-${imagePairs.length * 2}`,
         id2: `user-${imagePairs.length * 2 + 1}`,
@@ -25,9 +28,9 @@ const CameraScreen = ({ navigation }) => {
         pairId: `${imagePairs.length}`,
       };
 
+      // Update imagePairs state and navigate to GameScreen after capturing 6 images
       setImagePairs(prevPairs => {
-        const updatedImagePairs = [...prevPairs, newImagePair];
-        // Navigate to GameScreen with the images after capturing 6 images
+        const updatedImagePairs = [...prevPairs, newImagePair]; // Add new image pair
         if (updatedImagePairs.length === 6) {
           const preparedImages = updatedImagePairs.flatMap(({ id1, id2, uri1, uri2, pairId }) => [
             { id: id1, backImage: { uri: uri1 }, pairId },
@@ -40,6 +43,7 @@ const CameraScreen = ({ navigation }) => {
     }
   };
 
+  // Render camera screen based on camera permission status
   if (hasPermission === null) {
     return <View />;
   }
@@ -49,7 +53,9 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Camera component */}
       <Camera style={styles.camera} ref={(ref) => setCamera(ref)}>
+        {/* Button to capture picture */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
@@ -62,6 +68,7 @@ const CameraScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </Camera>
+      {/* Preview of captured images */}
       <View style={styles.previewContainer}>
         {imagePairs.flatMap(({ uri1, uri2 }) => [uri1, uri2]).map((uri, index) => (
           <Image key={index} style={styles.preview} source={{ uri }} />
@@ -71,6 +78,7 @@ const CameraScreen = ({ navigation }) => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

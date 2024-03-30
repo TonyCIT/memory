@@ -4,10 +4,11 @@ import { View, Text, StyleSheet } from 'react-native';
 import { getScores } from './database';
 
 const ScoreScreen = () => {
+  // State variable to store fetched scores
   const [scores, setScores] = useState([]);
 
+  // useEffect hook to fetch scores when the component mounts
   useEffect(() => {
-    // Fetch scores when the component mounts
     getScores((success, fetchedScores) => {
       if (success) {
         console.log('Fetched scores:', fetchedScores); // Debugging line
@@ -20,7 +21,9 @@ const ScoreScreen = () => {
 
   return (
     <View style={styles.container}>
+      {/* Title */}
       <Text style={styles.title}>High Scores</Text>
+      {/* Display fetched scores or a message if no scores available */}
       {scores.length > 0 ? (
         scores.map((score, index) => (
           <Text key={index} style={styles.scoreText}>
@@ -34,7 +37,7 @@ const ScoreScreen = () => {
   );
 };
 
-
+// Styles
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
@@ -54,4 +57,3 @@ const styles = StyleSheet.create({
 });
 
 export default ScoreScreen;
-

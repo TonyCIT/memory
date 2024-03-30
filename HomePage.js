@@ -8,7 +8,7 @@ const HomePage = ({ navigation }) => {
       <Text style={styles.title}>Welcome to the Memory Game</Text>
       <View style={styles.buttonContainer}>
         <Button title="Start Game" onPress={() => navigation.navigate('GameScreen')} />
-        <Button title="View Scores" onPress={() => navigation.navigate('ScoresScreen')} />
+        <Button title="View Scores" onPress={() => navigation.navigate('ScoreScreen')} />
         <Button title="Settings" onPress={() => navigation.navigate('SettingsScreen')} />
         <Button title="How to Play" onPress={() => navigation.navigate('HelpScreen')} />
       </View>

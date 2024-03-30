@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, Alert, Dimensions, ScrollView } from 'react-native';
 import FlipCard from 'react-native-flip-card';
 import { Audio } from 'expo-av';
+import { insertScore } from './database';
+import { useSoundContext } from './SoundContext';
 
 // Path to the images
 const frontImage = require('./assets/cover.png'); // Path to the front image of the card
 const goodSound = require('./assets/r.mp3'); // Path to the sound for correct matches
 const badSound = require('./assets/w.mp3'); // Path to the sound for incorrect matches
+
 
 // Data for the cards
 const cardsData = [
@@ -46,6 +49,8 @@ const App = () => {
   const [cards, setCards] = useState(() => shuffleArray(cardsData.map(card => ({ ...card, isFlipped: false, matched: false })))); // State for cards data
   const [canFlip, setCanFlip] = useState(true); // State to control flipping of cards
   const [flippedIndexes, setFlippedIndexes] = useState([]); // State to keep track of flipped card indexes
+  const { soundEnabled } = useSoundContext();
+  
 
   // State for sound effects
   const [sounds, setSounds] = useState({ goodSound: null, badSound: null });
@@ -74,10 +79,12 @@ const App = () => {
 
   // Function to play sound
   const playSound = async (sound) => {
-    try {
-      await sound?.replayAsync();
-    } catch (error) {
-      console.error("Couldn't play sound", error);
+    if (soundEnabled) { // Check if sound is enabled
+      try {
+        await sound?.replayAsync();
+      } catch (error) {
+        console.error("Couldn't play sound", error);
+      }
     }
   };
 
@@ -86,6 +93,16 @@ const App = () => {
     const allMatched = cards.every(card => card.matched);
     if (allMatched) {
       Alert.alert("Congratulations!", "You've matched all the cards!");
+
+      // Example score saving, using number of moves, time, or static value
+      const score = flippedIndexes.length;
+      insertScore(score, (success, result) => {
+        if (success) {
+          console.log('Score saved:', result);
+        } else {
+          console.error('Failed to save score');
+        }
+      });
     }
   };
 
@@ -111,7 +128,7 @@ const App = () => {
           flippedCards.forEach(card => card.isFlipped = false);
           setCards(newCards);
           setCanFlip(true);
-        }, 1400);
+        }, 500);
         setCards(newCards);
         return;
       }

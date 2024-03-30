@@ -1,47 +1,50 @@
-// Importing SQLite library for database operations
+// database.js
 import * as SQLite from 'expo-sqlite';
 
-// Opening or creating a database named 'game.db'
 const db = SQLite.openDatabase('game.db');
 
-// Function to initialize the database by creating a 'scores' table if it doesn't exist
-const initDB = () => {
+const initDB = (callback) => {
   db.transaction(tx => {
     tx.executeSql(
-      // SQL query to create the 'scores' table if it doesn't exist
       "CREATE TABLE IF NOT EXISTS scores (id INTEGER PRIMARY KEY AUTOINCREMENT, score INT);",
-      [], // No parameters required for this SQL query
-      () => console.log('Table created successfully'), // Success callback
-      (_, error) => console.log('Error creating table: ', error) // Error callback
+      [],
+      () => { console.log('Table created successfully'); callback?.(true); },
+      (_, error) => { console.log('Error creating table: ', error); callback?.(false, error); }
     );
   });
 };
 
-// Function to insert a new score into the 'scores' table
 const insertScore = (score, callback) => {
   db.transaction(tx => {
     tx.executeSql(
-      // SQL query to insert a score into the 'scores' table
-      "INSERT INTO scores (score) values (?);",
+      "INSERT INTO scores (score) VALUES (?);",
       [score],
-      (_, result) => callback(true, result), // Success callback
-      (_, error) => callback(false, error) // Error callback
+      (_, result) => { console.log('Score inserted successfully'); callback?.(true, result); },
+      (_, error) => { console.log('Error inserting score: ', error); callback?.(false, error); }
     );
   });
 };
 
-// Function to retrieve all scores from the 'scores' table
 const getScores = (callback) => {
   db.transaction(tx => {
     tx.executeSql(
-      // SQL query to select all scores from the 'scores' table
-      "SELECT * FROM scores;",
-      [], 
-      (_, result) => callback(true, result.rows._array), // Success callback
-      (_, error) => callback(false, error) // Error callback
+      "SELECT * FROM scores ORDER BY score DESC;",
+      [],
+      (_, result) => { callback?.(true, result.rows._array); },
+      (_, error) => { console.log('Error fetching scores: ', error); callback?.(false, error); }
     );
   });
 };
 
-// Exporting functions to be accessible from other modules
-export { initDB, insertScore, getScores };
+const clearScores = (callback) => {
+  db.transaction(tx => {
+    tx.executeSql(
+      "DELETE FROM scores;",
+      [],
+      (_, result) => { console.log('Scores cleared successfully'); callback?.(true, result); },
+      (_, error) => { console.log('Error clearing scores: ', error); callback?.(false, error); }
+    );
+  });
+};
+
+export { initDB, insertScore, getScores, clearScores };

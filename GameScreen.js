@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Alert, Dimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Alert, Dimensions, ScrollView, Vibration } from 'react-native';
 import FlipCard from 'react-native-flip-card';
 import { Audio } from 'expo-av';
 import { insertScore } from './database';
 import { useSoundContext } from './SoundContext';
+
 
 // Path to the images
 const frontImage = require('./assets/cover.png'); // Path to the front image of the card
@@ -50,7 +51,7 @@ const App = () => {
   const [canFlip, setCanFlip] = useState(true); // State to control flipping of cards
   const [flippedIndexes, setFlippedIndexes] = useState([]); // State to keep track of flipped card indexes
   const { soundEnabled } = useSoundContext();
-  
+
 
   // State for sound effects
   const [sounds, setSounds] = useState({ goodSound: null, badSound: null });
@@ -94,6 +95,9 @@ const App = () => {
     if (allMatched) {
       Alert.alert("Congratulations!", "You've matched all the cards!");
 
+      // Vibrate the phone to celebrate the win
+      Vibration.vibrate([500, 200, 500, 200, 1500]);
+
       // Example score saving, using number of moves, time, or static value
       const score = flippedIndexes.length;
       insertScore(score, (success, result) => {
@@ -122,6 +126,7 @@ const App = () => {
         flippedCards[0].matched = true;
         flippedCards[1].matched = true;
         playSound(sounds.goodSound);
+        Vibration.vibrate(100);
       } else {
         playSound(sounds.badSound);
         setTimeout(() => {

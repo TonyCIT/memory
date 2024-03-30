@@ -4,11 +4,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomePage from './HomePage';
 import GameScreen from './GameScreen';
-import ScoreScreen from './ScoreScreen'; 
+import ScoreScreen from './ScoreScreen';
 import HelpScreen from './HelpScreen';
 import SettingsScreen, { SoundContext } from './SettingsScreen'; // Ensure SoundContext is exported from SettingsScreen
 import { initDB } from './database';
 import { SoundProvider } from './SoundContext';
+import CameraScreen from './CameraScreen.js';
+
 
 const Stack = createStackNavigator();
 
@@ -28,8 +30,9 @@ export default function App() {
           <Stack.Screen name="ScoreScreen" component={ScoreScreen} options={{ title: 'Scores' }} />
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} options={{ title: 'Settings' }} />
           <Stack.Screen name="HelpScreen" component={HelpScreen} options={{ title: 'Help' }} />
+          <Stack.Screen name="CameraScreen" component={CameraScreen} options={{ title: 'Take Pictures' }} />
         </Stack.Navigator>
       </NavigationContainer>
-      </SoundProvider>
+    </SoundProvider>
   );
 }

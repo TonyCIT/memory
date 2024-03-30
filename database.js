@@ -16,12 +16,20 @@ const initDB = (callback) => {
 
 const insertScore = (score, callback) => {
   db.transaction(tx => {
-    tx.executeSql(
-      "INSERT INTO scores (score) VALUES (?);",
-      [score],
-      (_, result) => { console.log('Score inserted successfully'); callback?.(true, result); },
-      (_, error) => { console.log('Error inserting score: ', error); callback?.(false, error); }
-    );
+    // Inside insertScore function:
+tx.executeSql(
+  "INSERT INTO scores (score) VALUES (?);",
+  [score], // 'score' should be the variable you want to save
+  (_, result) => {
+    console.log('Score inserted successfully', result);
+    callback(true, result); // Make sure to call the callback with true and result
+  },
+  (_, error) => {
+    console.log('Error inserting score: ', error);
+    callback(false, error); // Call the callback with false and error
+  }
+);
+
   });
 };
 

@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
+// need to install
+// npm install @react-navigation/native
+// npm install react-native-screens react-native-safe-area-context
+// npm install @react-navigation/stack
+// npx expo install expo-sqlite
+// iOS, run-> npx pod-install
+// npx expo install react-native-gesture-handler
+// expo install expo-camera expo-image-picker
+
+import React, { useState, useEffect, useContext } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, Alert, Dimensions, ScrollView, Vibration } from 'react-native';
 import FlipCard from 'react-native-flip-card';
 import { Audio } from 'expo-av';
-import { insertScore } from './database';
+import { insertScore, getScores } from './database';
 import { useSoundContext } from './SoundContext';
 
 
@@ -51,6 +60,7 @@ const App = () => {
   const [canFlip, setCanFlip] = useState(true); // State to control flipping of cards
   const [flippedIndexes, setFlippedIndexes] = useState([]); // State to keep track of flipped card indexes
   const { soundEnabled } = useSoundContext();
+  const [moves, setMoves] = useState(0);
 
 
   // State for sound effects
@@ -93,16 +103,17 @@ const App = () => {
   const checkForMatch = () => {
     const allMatched = cards.every(card => card.matched);
     if (allMatched) {
-      Alert.alert("Congratulations!", "You've matched all the cards!");
+      
 
       // Vibrate the phone to celebrate the win
       Vibration.vibrate([500, 200, 500, 200, 1500]);
 
       // Example score saving, using number of moves, time, or static value
-      const score = flippedIndexes.length;
-      insertScore(score, (success, result) => {
+      // const moves = flippedIndexes.length;
+      insertScore(moves, (success, result) => {
         if (success) {
           console.log('Score saved:', result);
+          Alert.alert("Congratulations!", `You've matched all the cards! Your score: ${moves}`);
         } else {
           console.error('Failed to save score');
         }
@@ -115,6 +126,7 @@ const App = () => {
     if (!canFlip || cards[index].matched || cards[index].isFlipped) {
       return;
     }
+    setMoves(moves => moves + 1);
 
     const newCards = [...cards];
     newCards[index].isFlipped = true;
@@ -134,6 +146,7 @@ const App = () => {
           setCards(newCards);
           setCanFlip(true);
         }, 500);
+        
         setCards(newCards);
         return;
       }
